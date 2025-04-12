@@ -65,6 +65,33 @@
       background-color: #444;
       color: #eee;
     }
+    .method-badge {
+      font-weight: 600;
+      padding: 0.2em 0.5em;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      display: inline-block;
+      margin-right: 0.5rem;
+      text-transform: uppercase;
+    }
+    .method-GET    { background-color: #d1e7dd; color: #0f5132; }
+    .method-POST   { background-color: #cfe2ff; color: #084298; }
+    .method-PATCH  { background-color: #fff3cd; color: #664d03; }
+    .method-DELETE { background-color: #f8d7da; color: #842029; }
+    body.dark .method-GET    { background-color: #1e3c2e; color: #bcd9c7; }
+    body.dark .method-POST   { background-color: #1c2f4a; color: #bcd4f5; }
+    body.dark .method-PATCH  { background-color: #4b3f1e; color: #ffe8a1; }
+    body.dark .method-DELETE { background-color: #502c2c; color: #f5b5b5; }
+    .auth-required {
+      font-size: 0.75rem;
+      color: #999;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .auth-required i {
+      font-size: 0.85rem;
+    }
     .simulate-view {
       display: none;
       grid-template-columns: 1fr 1fr;
@@ -91,7 +118,6 @@
     .simulate-close:hover {
       color: #dc3545;
     }
-
     .simulate-fade {
       animation: fadeSim 0.2s ease-in-out;
     }
@@ -207,6 +233,9 @@
           renderRoutes(data);
         });
 
+      const storedTag = localStorage.getItem('activeTag');
+      if (storedTag) activeTag = storedTag;
+      
       function renderTags(data) {
         const tags = new Set();
         data.forEach(r => r.tags.forEach(tag => tags.add(tag)));
@@ -233,7 +262,7 @@
           };
           tagFilters.appendChild(btn);
         });
-
+        localStorage.setItem('activeTag', activeTag);
         syncTheme();
       }
 
@@ -265,15 +294,21 @@
           routes.forEach((route, idx) => {
             const card = document.createElement('div');
             card.className = 'card mb-3';
-            const lockIcon = route.auth_required ? '<i class="bi bi-lock-fill text-danger me-1" title="Auth required"></i>' : '';
-            const routeId = `route-${group}-${idx}`;
             const simulateId = `simulate-${group}-${idx}`;
 
+            const methodIconMap = {
+              GET: 'bi-eye',
+              POST: 'bi-plus-lg',
+              PATCH: 'bi-pencil',
+              DELETE: 'bi-trash'
+            };
+
+            const methodIcon = methodIconMap[route.method] || 'bi-code';
+
             const requiredParams = route.params.filter(p => p.required);
+            const requestObject = Object.fromEntries(requiredParams.map(p => [p.name, '...']));
             const requestPreview = requiredParams.length
-              ? `{
-${requiredParams.map(p => `  ${p.name}: "..."`).join(',\n')}
-}`
+              ? JSON.stringify(requestObject, null, 2)
               : '<em>No parameters required</em>';
 
             const responseOptions = route.responses.map((r, i) => `<option value="${i}">${r.code} - ${r.desc}</option>`).join('');
@@ -282,7 +317,13 @@ ${requiredParams.map(p => `  ${p.name}: "..."`).join(',\n')}
             card.innerHTML = `
               <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
-                  <h5 class="card-title mb-0">${lockIcon}${route.method} <code>${route.path}</code></h5>
+                  <h5 class="card-title mb-0">
+                    <span class="method-badge method-${route.method}">
+                      <i class="bi ${methodIcon} me-1"></i>${route.method}
+                    </span>
+                    <code>${route.path}</code>
+                    ${route.auth_required ? '<span class="auth-required ms-2"><i class="bi bi-lock-fill"></i></span>' : ''}
+                  </h5>
                   <div>${route.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>
                 </div>
                 <p class="card-text mt-2">${route.description}</p>
