@@ -235,7 +235,7 @@
 
       const storedTag = localStorage.getItem('activeTag');
       if (storedTag) activeTag = storedTag;
-      
+
       function renderTags(data) {
         const tags = new Set();
         data.forEach(r => r.tags.forEach(tag => tags.add(tag)));
@@ -339,7 +339,7 @@
 
                 <div class="mt-3">
                   <strong>Responses:</strong>
-                  <select class="form-select form-select-sm w-auto d-inline ms-2" onchange="changeExample('${simulateId}', this.value)">
+                  <select class="form-select form-select-sm w-auto d-inline ms-2" onchange="changeExample('${simulateId}', this.value, ${JSON.stringify(route).replace(/"/g, '&quot;')})">
                     ${responseOptions}
                   </select>
                   <button class="btn btn-sm btn-outline-primary ms-2" onclick="simulate('${simulateId}')">Simulate</button>
@@ -379,11 +379,10 @@
         if (el) el.classList.remove('active');
       }
 
-      function changeExample(containerId, index) {
-        const container = document.getElementById(containerId);
+      function changeExample(containerId, index, route) {
         const target = document.getElementById(`${containerId}-response`);
-        const route = allRoutes.find(r => `${containerId}`.includes(r.path.split('/')[1]));
-        if (!route || !route.responses[index]) return;
+        if (!route || !route.responses || !route.responses[index]) return;
+
         target.classList.remove('simulate-fade');
         void target.offsetWidth;
         target.classList.add('simulate-fade');
